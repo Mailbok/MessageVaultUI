@@ -6,6 +6,6 @@ This is the front end and is designed to be used alongside Message Vault API - h
 
 Start UI:
 
-1. npm install
-
-2. npm start
+1. cd MessageVaultUI
+2. npm install
+3. npm start
