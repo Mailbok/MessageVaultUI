@@ -1,44 +1,115 @@
 import React from 'react';
-import {Button, TextField, Typography, FormControl} from '@material-ui/core'
+import {Button, TextField, Typography, Container, Snackbar, Slide, RadioGroup, Radio, FormControlLabel, makeStyles} from '@material-ui/core'
+import Alert from '@material-ui/lab/Alert';
 import './App.css';
-import {getMessage, sendMessage} from './service.js';
+import {getMessage, sendMessage} from './api.js';
 
+const useStyles = makeStyles({
+  root: {
+    display: 'flex',
+    height: '100vh',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    textAlign: 'center',
+    paddingTop: '20px',
+  },
+  formContainer: {
+    height: '75vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fieldsContainer: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  formFields: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: '20px',
+  },
+  textFields: {
+    display: 'flex',
+    height: '20vh',
+    paddingBottom: '15px',
+    flexDirection: 'column',
+    alignItems:'left'
+  },
+  radioButtonGroup: {
+    borderRightWidth: 'thin',
+    borderRightStyle: 'dotted',
+  },
+  submitButton: {
+    background: 'green',
+    color:'white'
+  }
+})
 
-class MessageForm extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      message: '',
-      password: ''
-    };
+const transition = (props) => {
+  return <Slide {...props} direction="up" />;
+};
 
-    this.handlePasswordChange = this.handlePasswordChange.bind(this);
-    this.handleMessageChange = this.handleMessageChange.bind(this);
-    this.handleSend = this.handleSend.bind(this);
-    this.handleView = this.handleView.bind(this);
+function MessageForm() {
+  const classes = useStyles();
+
+  const [message, setMessage] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [radioValue, setRadioValue] = React.useState('view');
+  const [snackOpen, setSnackOpen] = React.useState(false);
+  const [snackSeverity, setSnackSeverity] = React.useState('');
+  const [snackMessage, setSnackMessage] = React.useState('');
+
+  const showSnack = (severity, message) => {
+    setSnackMessage(message);
+    setSnackSeverity(severity);
+    setSnackOpen(true);
   }
 
-  handlePasswordChange(event) {
+  const handlePasswordChange = (event) => {
     /*Look into hashing password if you have time*/
-    this.setState({password: event.target.value});
+    setPassword(event.target.value);
   }
 
-  handleMessageChange(event) {
-    this.setState({message: event.target.value});
+  const handleMessageChange = (event) => {
+    setMessage(event.target.value);
   }
 
-  handleSend() {
-    if ((this.state.password === "") || (this.state.message === "")) {
-      alert('Please enter a password and a message')
+  const handleSnackClose = (event, reason) => {
+    setSnackOpen(false);
+  };
+
+  const handleRadioChange = (event) => {
+    setPassword('')
+    setMessage('')
+    setRadioValue(event.target.value);
+  };
+
+  const handleSubmit = () => {
+    if (radioValue === 'send') {
+      send()
+    }
+    else if (radioValue === 'view') {
+      view()
+    }
+  }
+
+  const send = () => {
+    if ((password == "") || (message == "")) {
+      showSnack('warning', 'You must enter a password and a message')
     }
     else {
-      sendMessage(this.state.password, this.state.message)
+      sendMessage(password, message)
       .then(async response => {
         if (!response.ok) {
           return Promise.reject(response.status);
         }
         const data = await response.json();
-        alert('Message posted successfully')
+        showSnack('success', 'Message posted successfully');
       })
       .catch(error => {
         let messages = {
@@ -46,71 +117,83 @@ class MessageForm extends React.Component {
           500 : 'Unexpected error occured, try again later',
           404 : 'Unexpected error occured, try again later'
         }
-        this.setState({message: ''})
-        this.setState({password: ''})
+        setMessage('')
+        setPassword('')
         console.log(error)
-        alert(messages[error])
+        showSnack('error', messages[error])
       })
     }
   }
 
-  handleView() {
-    if (this.state.password === "") {
-      alert('Please enter a password')
+  const view = () => {
+    if (password === "") {
+      showSnack('warning', 'You must enter a password')
     }
     else {
-      this.setState({message: ''})
-      getMessage(this.state.password)
+      setMessage('')
+      getMessage(password)
       .then(async response => {
   
         if (!response.ok) {
           return Promise.reject(response.statusText);
         }
         else if (response.status == '204') {
-          alert('No message exists for this password')
-          this.setState({message: ''})
-          this.setState({password: ''})
+          showSnack('warning', 'No message exists for this password');
+          setMessage('')
+          setPassword('')
         }
         else {
           const data = await response.json();
-          this.setState({message: data['data']})
+          setMessage(data['data'])
         }
   
       })
       .catch(error => {
         console.log(error)
-        this.setState({message: ''})
-        alert(error)
+        setMessage('')
       })
     }
   }
 
-  render() {
-    return (
-      <div>
-        <Typography variant='h4'>
-          Message Vault
-        </Typography>
-        <FormControl>
-          <TextField label='Password' type='password' value={this.state.password} onChange={this.handlePasswordChange}/>
-          <TextField label='Message' value={this.state.message} onChange={this.handleMessageChange}/>
-          <Button onClick={this.handleView}>View</Button>
-          <Button onClick={this.handleSend}>Send</Button>
-        </FormControl>
-
-      </div>
-    );
-  }
-}
-
-function App() {
   return (
-    <div className="App">
-      <header>
-        <MessageForm/>
-      </header>
-    </div>
+    <Container >
+      <Typography variant='h4' className={classes.title}>
+        Message Vault
+      </Typography>
+
+      <Container className={classes.formContainer}>
+        <Container className={classes.formFields}>
+          <RadioGroup className={classes.radioButtonGroup} aria-label="function" name="Function" value={radioValue} onChange={handleRadioChange}>
+            <FormControlLabel value="view" control={<Radio />} label="View" />
+            <FormControlLabel value="send" control={<Radio />} label="Send" />
+          </RadioGroup>
+          <Container className={classes.textFields}>
+            <TextField required size='small' label='Password' type='password' value={password} onChange={handlePasswordChange}/>
+            {(radioValue === 'send') ? 
+              <TextField required multiline rows={4} size='small' label='Message' value={message} onChange={handleMessageChange}/> : 
+              <TextField multiline disabled rows={4} size='small' label='Message' value={message} onChange={handleMessageChange}/>}
+          </Container>
+        </Container>
+        
+        <Button onClick={handleSubmit} variant='outlined' color='secondary'>Submit</Button>
+      </Container>
+
+      <Snackbar open={snackOpen} autoHideDuration={6000} onClose={handleSnackClose} TransitionComponent={transition}>
+        <Alert onClose={handleSnackClose} severity={snackSeverity}>
+          {snackMessage}
+        </Alert>
+      </Snackbar>
+
+    </Container>
   );
 }
 
-export default App;
+export default function App() {
+  const classes = useStyles();
+
+  return (
+    <div>
+        <MessageForm/>
+    </div>
+  );
+}
