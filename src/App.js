@@ -174,7 +174,6 @@ function MessageForm() {
           <RadioGroup className={classes.radioButtonGroup} aria-label="function" name="Function" value={radioValue} onChange={handleRadioChange}>
             <FormControlLabel value="view" control={<Radio />} label="View" />
             <FormControlLabel value="send" control={<Radio />} label="Send" />
-            <FormControlLabel value="change" control={<Radio />} label="Change" />
           </RadioGroup>
           <Container className={classes.textFields}>
             <TextField required size='small' label='Password' type='password' value={password} onChange={handlePasswordChange}/>
