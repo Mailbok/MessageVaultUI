@@ -59,6 +59,7 @@ function MessageForm() {
 
   const [message, setMessage] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [textFieldDisabled, setTextFieldDisabled] = React.useState(true);
   const [radioValue, setRadioValue] = React.useState('view');
   const [snackOpen, setSnackOpen] = React.useState(false);
   const [snackSeverity, setSnackSeverity] = React.useState('');
@@ -87,6 +88,13 @@ function MessageForm() {
     setPassword('')
     setMessage('')
     setRadioValue(event.target.value);
+
+    if (event.target.value === 'view') {
+      setTextFieldDisabled(true)
+    }
+    else {
+      setTextFieldDisabled(false)
+    }
   };
 
   const handleSubmit = () => {
@@ -166,12 +174,11 @@ function MessageForm() {
           <RadioGroup className={classes.radioButtonGroup} aria-label="function" name="Function" value={radioValue} onChange={handleRadioChange}>
             <FormControlLabel value="view" control={<Radio />} label="View" />
             <FormControlLabel value="send" control={<Radio />} label="Send" />
+            <FormControlLabel value="change" control={<Radio />} label="Change" />
           </RadioGroup>
           <Container className={classes.textFields}>
             <TextField required size='small' label='Password' type='password' value={password} onChange={handlePasswordChange}/>
-            {(radioValue === 'send') ? 
-              <TextField required multiline rows={4} size='small' label='Message' value={message} onChange={handleMessageChange}/> : 
-              <TextField multiline disabled rows={4} size='small' label='Message' value={message} onChange={handleMessageChange}/>}
+            <TextField required={!textFieldDisabled} disabled={textFieldDisabled} multiline rows={4} size='small' label='Message' value={message} onChange={handleMessageChange}/>
           </Container>
         </Container>
         
